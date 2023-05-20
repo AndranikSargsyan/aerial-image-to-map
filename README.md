@@ -1,6 +1,8 @@
 # 🌍 Qartezator: Yet another aerial image-to-map translator
 
-Qartezator can create a map from any given aerial image.
+Qartezator is your translator between aerial images and maps.
+
+![Qartezator teaser](https://github.com/AndranikSargsyan/qartezator/blob/master/assets/teaser.gif)
 
 # Environment setup
 
