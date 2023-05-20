@@ -1,6 +1,9 @@
 albumentations==1.3.0
+matplotlib
+notebook
 numpy
-opencv-python==4.2.0.*
+opencv-python==4.7.*
+pylsd-nova
 torch==1.13.1
 torchvision==0.14.1
 tqdm
