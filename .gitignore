@@ -160,7 +160,10 @@ cython_debug/
 #.idea/
 
 data/
+experiments/
 !qartezator/data
+models/
+!qartezator/models
 
 *.pt
 *.pth

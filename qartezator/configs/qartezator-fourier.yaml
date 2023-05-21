@@ -1,0 +1,109 @@
+run_title: 'qartezator-fourier'
+
+location:
+  data_root_dir: /home/andranik/YSU/Python/Project/qartezator/data/maps
+  out_root_dir: /home/andranik/YSU/Python/Project/qartezator/experiments/outputs
+  tb_dir: /home/andranik/YSU/Python/Project/qartezator/experiments/tb_logs/
+
+training_model:
+  kind: default
+  visualize_each_iters: 200
+losses:
+  l1:
+    weight_missing: 0
+    weight_known: 10
+  perceptual:
+    weight: 0
+  adversarial:
+    kind: r1
+    weight: 10
+    gp_coef: 0.001
+  feature_matching:
+    weight: 100
+  resnet_pl:
+    weight: 30
+    weights_path: .
+
+visualizer:
+  kind: directory
+  outdir: /home/andranik/YSU/Python/Project/qartezator/experiments/samples
+  key_order:
+    - source_img
+    - target_img
+    - predicted_img
+  rescale_keys:
+    - discr_output_fake
+    - discr_output_real
+
+datamodule:
+  root_path: ./data/maps
+  train_txt_path: ./assets/train.txt
+  val_txt_path: ./assets/val.txt
+  test_txt_path: ./assets/test.txt
+  train_batch_size: 4
+  val_batch_size: 4
+  test_batch_size: 4
+  num_workers: 4
+  input_size: 256
+  pad_to_modulo: 32
+  mean: null
+  std: null
+
+generator:
+  input_nc: 3
+  output_nc: 3
+  ngf: 64
+  n_downsampling: 3
+  n_blocks: 9
+  add_out_act: sigmoid
+
+  init_conv_kwargs:
+    ratio_gin: 0
+    ratio_gout: 0
+    enable_lfu: False
+
+  downsample_conv_kwargs:
+    ratio_gin: 0
+    ratio_gout: 0
+    enable_lfu: False
+
+  resnet_conv_kwargs:
+    ratio_gin: 0.75
+    ratio_gout: 0.75
+    enable_lfu: False
+
+discriminator:
+  input_nc: 6
+  ndf: 64
+  n_layers: 4
+
+optimizers:
+  generator:
+    kind: adam
+    lr: 0.0001
+  discriminator:
+    kind: adam
+    lr: 0.00005
+
+trainer:
+  kwargs:
+    accelerator: gpu
+    max_epochs: 1000
+    gradient_clip_val: 1
+    log_every_n_steps: 250
+    precision: 32
+    check_val_every_n_epoch: 1
+    num_sanity_val_steps: 8
+    accumulate_grad_batches: 8
+
+  checkpoint_kwargs:
+    verbose: True
+    save_top_k: 5
+    save_last: True
+    every_n_epochs: 1
+    monitor: val_ssim_total_mean
+    mode: max
+
+evaluator:
+  kind: default
+  integral_kind: null
