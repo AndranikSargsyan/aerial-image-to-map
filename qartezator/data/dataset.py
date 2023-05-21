@@ -1,9 +1,9 @@
 from pathlib import Path
-from typing import Union, Tuple
+from typing import Union, Tuple, Optional
 
 from torch.utils.data import Dataset
 
-from qartezator.data.datautils import load_image
+from qartezator.data.datautils import load_image, pad_img_to_modulo
 from qartezator.data.typing import TransformType, DatasetElement
 
 
@@ -12,13 +12,15 @@ class QartezatorDataset(Dataset):
         self,
         root_path: Union[str, Path],
         split_file_path: Union[str, Path],
-        source_transform: TransformType = None,
-        common_transform: TransformType = None
+        source_transform: Optional[TransformType] = None,
+        common_transform: Optional[TransformType] = None,
+        pad_to_modulo: int = 32
     ):
         self.root_path = Path(root_path)
         self.split_file_path = split_file_path
         self.source_transform = source_transform
         self.common_transform = common_transform
+        self.pad_to_modulo = pad_to_modulo
         with open(split_file_path) as f:
             self.img_paths = f.read().splitlines()
 
@@ -31,6 +33,9 @@ class QartezatorDataset(Dataset):
         img_h, img_w = img.shape[:2]
         source_img = img[:, :img_w//2]
         target_img = img[:, img_w//2:]
+        if self.pad_to_modulo > 0:
+            source_img = pad_img_to_modulo(source_img, self.pad_to_modulo)
+            target_img = pad_img_to_modulo(target_img, self.pad_to_modulo)
         if self.source_transform is not None:
             transformed = self.source_transform(image=source_img)
             source_img = transformed['image']

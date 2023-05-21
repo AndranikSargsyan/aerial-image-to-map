@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Union, List
+from typing import Union, List, Optional
 
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader
 from qartezator.data.dataset import QartezatorDataset
 from qartezator.data.datautils import seed_worker
 from qartezator.data.transforms import get_transforms, get_common_augmentations
+from qartezator.data.typing import TransformType
 
 
 class QartezatorDataModule(pl.LightningDataModule):
@@ -22,6 +23,9 @@ class QartezatorDataModule(pl.LightningDataModule):
         test_batch_size: int = 32,
         num_workers: int = 4,
         input_size: int = 256,
+        pad_to_modulo: int = 32,
+        common_transform: Optional[TransformType] = None,
+        source_transform: Optional[TransformType] = None,
         mean: List[float] = None,
         std: List[float] = None
     ) -> None:
@@ -36,19 +40,26 @@ class QartezatorDataModule(pl.LightningDataModule):
         self.test_batch_size = test_batch_size
         self.num_workers = num_workers
         self.input_size = input_size
+        self.pad_to_modulo = pad_to_modulo
+        self.common_transform = common_transform
+        self.source_transform = source_transform
         self.mean = mean
         self.std = std
 
     def train_dataloader(self) -> DataLoader:
         # source_augmentations = ...
-        common_augmentations = get_common_augmentations(self.input_size)
-        common_transform = get_transforms(mean=self.mean, std=self.std, augmentations=common_augmentations)
+
+        common_transform = self.common_transform
+        if self.common_transform is None:
+            common_augmentations = get_common_augmentations(self.input_size)
+            common_transform = get_transforms(mean=self.mean, std=self.std, augmentations=common_augmentations)
 
         dataset = QartezatorDataset(
             root_path=self.root_path,
             split_file_path=self.train_txt_path,
-            # source_transform=source_transform,
-            common_transform=common_transform
+            source_transform=self.source_transform,
+            common_transform=common_transform,
+            pad_to_modulo=self.pad_to_modulo
         )
 
         return DataLoader(
@@ -67,7 +78,8 @@ class QartezatorDataModule(pl.LightningDataModule):
         dataset = QartezatorDataset(
             root_path=self.root_path,
             split_file_path=self.val_txt_path,
-            common_transform=transform
+            common_transform=transform,
+            pad_to_modulo=self.pad_to_modulo
         )
 
         return DataLoader(
@@ -84,7 +96,8 @@ class QartezatorDataModule(pl.LightningDataModule):
         dataset = QartezatorDataset(
             root_path=self.root_path,
             split_file_path=self.test_txt_path,
-            common_transform=transform
+            common_transform=transform,
+            pad_to_modulo=self.pad_to_modulo
         )
 
         return DataLoader(
