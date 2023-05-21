@@ -94,3 +94,23 @@ class QartezatorDataModule(pl.LightningDataModule):
             shuffle=False,
             pin_memory=True
         )
+
+
+if __name__ == '__main__':
+    root_path = 'data/maps'
+    train_txt_path = 'assets/train.txt'
+    val_txt_path = 'assets/val.txt'
+    test_txt_path = 'assets/test.txt'
+    dm = QartezatorDataModule(
+        root_path=root_path,
+        train_txt_path=train_txt_path,
+        val_txt_path=val_txt_path,
+        test_txt_path=test_txt_path,
+        input_size=256
+    )
+    train_dataloader = dm.train_dataloader()
+    for batch in train_dataloader:
+        source, target = batch
+        print(f'Source batch shape: {source.shape}')
+        print(f'Target batch shape: {target.shape}\n')
+        break

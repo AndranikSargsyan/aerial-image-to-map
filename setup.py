@@ -11,5 +11,6 @@ setup(
     long_description_content_type='text/markdown',
     license='MIT',
     keywords='aerial-image-to-map',
-    url='https://github.com/AndranikSargsyan/qartezator'
+    url='https://github.com/AndranikSargsyan/qartezator',
+    packages=['qartezator'],
 )
