@@ -38,6 +38,8 @@ class QartezatorDataset(Dataset):
             transformed = self.common_transform(image=source_img, target=target_img)
             source_img = transformed['image']
             target_img = transformed['target']
+        source_img = source_img / 255.0
+        target_img = target_img / 255.0
         return source_img, target_img
 
 

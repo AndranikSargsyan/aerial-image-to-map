@@ -111,6 +111,8 @@ if __name__ == '__main__':
     train_dataloader = dm.train_dataloader()
     for batch in train_dataloader:
         source, target = batch
+        print(f'Source batch dtype: {source.dtype}')
+        print(f'Target batch dtype: {target.dtype}\n')
         print(f'Source batch shape: {source.shape}')
         print(f'Target batch shape: {target.shape}\n')
         break
