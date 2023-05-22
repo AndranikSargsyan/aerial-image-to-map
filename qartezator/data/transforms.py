@@ -15,6 +15,7 @@ ADDITIONAL_TARGETS = {'target': 'image'}
 def get_common_augmentations(crop_size=256):
     transforms = A.Compose([
         A.Rotate(limit=180, border_mode=cv2.BORDER_REFLECT),
+        A.RandomScale(scale_limit=(1, 1.4)),
         A.RandomCrop(height=crop_size, width=crop_size, always_apply=True)
     ], additional_targets=ADDITIONAL_TARGETS)
     return transforms
@@ -22,8 +23,14 @@ def get_common_augmentations(crop_size=256):
 
 def get_source_augmentations():
     transforms = A.Compose([
-        A.RandomBrightnessContrast(),
-        A.ISONoise()
+        A.RandomBrightnessContrast(brightness_limit=0.05, contrast_limit=0.05),
+        A.OneOf([
+            A.CLAHE(),
+            A.Sharpen(),
+            A.Blur(),
+        ], p=0.5),
+        A.HueSaturationValue(hue_shift_limit=5, sat_shift_limit=30, val_shift_limit=5, p=0.5),
+        A.ISONoise(p=0.5)
     ])
     return transforms
 

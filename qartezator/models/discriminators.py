@@ -4,49 +4,9 @@ from collections import defaultdict
 import numpy as np
 import torch.nn as nn
 
-from qartezator.models.modules.base import BaseDiscriminator
-
-
-class DotDict(defaultdict):
-    # https://stackoverflow.com/questions/2352181/how-to-use-a-dot-to-access-members-of-dictionary
-    """dot.notation access to dictionary attributes"""
-    __getattr__ = defaultdict.get
-    __setattr__ = defaultdict.__setitem__
-    __delattr__ = defaultdict.__delitem__
-
-class Identity(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, x):
-        return x
-
-
-class MultidilatedResnetBlock(nn.Module):
-    def __init__(self, dim, padding_type, conv_layer, norm_layer, activation=nn.ReLU(True), use_dropout=False):
-        super().__init__()
-        self.conv_block = self.build_conv_block(dim, padding_type, conv_layer, norm_layer, activation, use_dropout)
-
-    def build_conv_block(self, dim, padding_type, conv_layer, norm_layer, activation, use_dropout, dilation=1):
-        conv_block = []
-        conv_block += [conv_layer(dim, dim, kernel_size=3, padding_mode=padding_type),
-                       norm_layer(dim),
-                       activation]
-        if use_dropout:
-            conv_block += [nn.Dropout(0.5)]
-
-        conv_block += [conv_layer(dim, dim, kernel_size=3, padding_mode=padding_type),
-                       norm_layer(dim)]
-
-        return nn.Sequential(*conv_block)
-
-    def forward(self, x):
-        out = x + self.conv_block(x)
-        return out
-
 
 # Defines the PatchGAN discriminator with the specified arguments.
-class NLayerDiscriminator(BaseDiscriminator):
+class NLayerDiscriminator(nn.Module):
     def __init__(self, input_nc, ndf=64, n_layers=3, norm_layer=nn.BatchNorm2d,):
         super().__init__()
         self.n_layers = n_layers

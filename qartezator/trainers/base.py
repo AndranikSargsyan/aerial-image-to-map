@@ -9,10 +9,11 @@ import torch.nn as nn
 
 from qartezator.evaluation import make_evaluator
 from qartezator.data.datamodule import QartezatorDataModule
+from qartezator.data.transforms import get_source_augmentations
 from qartezator.losses.adversarial import make_discrim_loss
 from qartezator.losses.perceptual import PerceptualLoss, ResNetPL
-from qartezator.models.modules.ffc import FFCResNetGenerator
-from qartezator.models.pix2pixhd import NLayerDiscriminator
+from qartezator.models.generators import FFCResNetGenerator
+from qartezator.models.discriminators import NLayerDiscriminator
 from qartezator.visualizers import make_visualizer
 from qartezator.utils.lamautils import add_prefix_to_keys, average_dicts, set_requires_grad, flatten_dict, \
     get_has_ddp_rank
@@ -48,7 +49,8 @@ class BaseTrainingModule(ptl.LightningModule):
 
         self.config = config
 
-        self.datamodule = QartezatorDataModule(**self.config.datamodule)
+        self.datamodule = QartezatorDataModule(**self.config.datamodule,
+                                               source_transform=get_source_augmentations())
         self.generator = FFCResNetGenerator(**self.config.generator)
         self.use_ddp = use_ddp
 
@@ -210,7 +212,6 @@ class BaseTrainingModule(ptl.LightningModule):
         return self.generator
 
     def forward(self, batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
-        """Pass data through generator and obtain at leas 'predicted_image' and 'inpainted' keys"""
         raise NotImplementedError()
 
     def generator_loss(self, source_img, target_img, predicted_img) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:

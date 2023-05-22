@@ -2,12 +2,10 @@
 # original implementation https://github.com/pkumivision/FFC/blob/main/model_zoo/ffc.py
 # paper https://proceedings.neurips.cc/paper/2020/file/2fd5d41ec6cfab47e32164d5624269b1-Paper.pdf
 
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from qartezator.models.modules.base import get_activation, BaseDiscriminator
 from qartezator.models.modules.squeeze_excitation import SELayer
 
 
@@ -295,131 +293,3 @@ class ConcatTupleLayer(nn.Module):
         if not torch.is_tensor(x_g):
             return x_l
         return torch.cat(x, dim=1)
-
-
-class FFCResNetGenerator(nn.Module):
-    def __init__(self, input_nc, output_nc, ngf=64, n_downsampling=3, n_blocks=9, norm_layer=nn.BatchNorm2d,
-                 padding_type='reflect', activation_layer=nn.ReLU,
-                 up_norm_layer=nn.BatchNorm2d, up_activation=nn.ReLU(True),
-                 init_conv_kwargs={}, downsample_conv_kwargs={}, resnet_conv_kwargs={},
-                 add_out_act=True, max_features=1024, out_ffc=False, out_ffc_kwargs={}):
-        assert (n_blocks >= 0)
-        super().__init__()
-
-        model = [nn.ReflectionPad2d(3),
-                 FFC_BN_ACT(input_nc, ngf, kernel_size=7, padding=0, norm_layer=norm_layer,
-                            activation_layer=activation_layer, **init_conv_kwargs)]
-
-        ### downsample
-        for i in range(n_downsampling):
-            mult = 2 ** i
-            if i == n_downsampling - 1:
-                cur_conv_kwargs = dict(downsample_conv_kwargs)
-                cur_conv_kwargs['ratio_gout'] = resnet_conv_kwargs.get('ratio_gin', 0)
-            else:
-                cur_conv_kwargs = downsample_conv_kwargs
-            model += [FFC_BN_ACT(min(max_features, ngf * mult),
-                                 min(max_features, ngf * mult * 2),
-                                 kernel_size=3, stride=2, padding=1,
-                                 norm_layer=norm_layer,
-                                 activation_layer=activation_layer,
-                                 **cur_conv_kwargs)]
-
-        mult = 2 ** n_downsampling
-        feats_num_bottleneck = min(max_features, ngf * mult)
-
-        ### resnet blocks
-        for i in range(n_blocks):
-            cur_resblock = FFCResnetBlock(feats_num_bottleneck, padding_type=padding_type, activation_layer=activation_layer,
-                                          norm_layer=norm_layer, **resnet_conv_kwargs)
-            model += [cur_resblock]
-
-        model += [ConcatTupleLayer()]
-
-        ### upsample
-        for i in range(n_downsampling):
-            mult = 2 ** (n_downsampling - i)
-            model += [nn.ConvTranspose2d(min(max_features, ngf * mult),
-                                         min(max_features, int(ngf * mult / 2)),
-                                         kernel_size=3, stride=2, padding=1, output_padding=1),
-                      up_norm_layer(min(max_features, int(ngf * mult / 2))),
-                      up_activation]
-
-        if out_ffc:
-            model += [FFCResnetBlock(ngf, padding_type=padding_type, activation_layer=activation_layer,
-                                     norm_layer=norm_layer, inline=True, **out_ffc_kwargs)]
-
-        model += [nn.ReflectionPad2d(3),
-                  nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0)]
-        if add_out_act:
-            model.append(get_activation('tanh' if add_out_act is True else add_out_act))
-        self.model = nn.Sequential(*model)
-
-    def forward(self, input):
-        return self.model(input)
-
-
-class FFCNLayerDiscriminator(BaseDiscriminator):
-    def __init__(self, input_nc, ndf=64, n_layers=3, norm_layer=nn.BatchNorm2d, max_features=512,
-                 init_conv_kwargs={}, conv_kwargs={}):
-        super().__init__()
-        self.n_layers = n_layers
-
-        def _act_ctor(inplace=True):
-            return nn.LeakyReLU(negative_slope=0.2, inplace=inplace)
-
-        kw = 3
-        padw = int(np.ceil((kw-1.0)/2))
-        sequence = [[FFC_BN_ACT(input_nc, ndf, kernel_size=kw, padding=padw, norm_layer=norm_layer,
-                                activation_layer=_act_ctor, **init_conv_kwargs)]]
-
-        nf = ndf
-        for n in range(1, n_layers):
-            nf_prev = nf
-            nf = min(nf * 2, max_features)
-
-            cur_model = [
-                FFC_BN_ACT(nf_prev, nf,
-                           kernel_size=kw, stride=2, padding=padw,
-                           norm_layer=norm_layer,
-                           activation_layer=_act_ctor,
-                           **conv_kwargs)
-            ]
-            sequence.append(cur_model)
-
-        nf_prev = nf
-        nf = min(nf * 2, 512)
-
-        cur_model = [
-            FFC_BN_ACT(nf_prev, nf,
-                       kernel_size=kw, stride=1, padding=padw,
-                       norm_layer=norm_layer,
-                       activation_layer=lambda *args, **kwargs: nn.LeakyReLU(*args, negative_slope=0.2, **kwargs),
-                       **conv_kwargs),
-            ConcatTupleLayer()
-        ]
-        sequence.append(cur_model)
-
-        sequence += [[nn.Conv2d(nf, 1, kernel_size=kw, stride=1, padding=padw)]]
-
-        for n in range(len(sequence)):
-            setattr(self, 'model'+str(n), nn.Sequential(*sequence[n]))
-
-    def get_all_activations(self, x):
-        res = [x]
-        for n in range(self.n_layers + 2):
-            model = getattr(self, 'model' + str(n))
-            res.append(model(res[-1]))
-        return res[1:]
-
-    def forward(self, x):
-        act = self.get_all_activations(x)
-        feats = []
-        for out in act[:-1]:
-            if isinstance(out, tuple):
-                if torch.is_tensor(out[1]):
-                    out = torch.cat(out, dim=1)
-                else:
-                    out = out[0]
-            feats.append(out)
-        return act[-1], feats

@@ -35,9 +35,7 @@ def visualize_images(images_dict: Dict[str, np.ndarray], keys: List[str], rescal
 
 def visualize_images_batch(batch: Dict[str, torch.Tensor], keys: List[str], max_items=10,
                                     rescale_keys=None) -> np.ndarray:
-    batch = {k: tens.detach().cpu().numpy() for k, tens in batch.items()
-             if k in keys or k == 'mask'}
-
+    batch = {k: tens.detach().cpu().numpy() for k, tens in batch.items() if k in keys}
     batch_size = next(iter(batch.values())).shape[0]
     items_to_vis = min(batch_size, max_items)
     result = []

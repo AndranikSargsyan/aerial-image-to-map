@@ -51,13 +51,14 @@ class QartezatorDataset(Dataset):
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
-    from qartezator.data.transforms import get_common_augmentations
+    from qartezator.data.transforms import get_common_augmentations, get_source_augmentations
 
     # Create QartezatorDataset and take the first sample
     ds = QartezatorDataset(
         root_path='./data/maps',
         split_file_path='./assets/train.txt',
-        common_transform=get_common_augmentations(600)
+        common_transform=get_common_augmentations(600),
+        source_transform=get_source_augmentations()
     )
     sample_source_img, sample_target_img = ds[10]
 
