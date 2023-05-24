@@ -13,8 +13,16 @@ from PIL import Image
 
 # Mock function 
 def predict(image):
-   
-    return image
+    if option == 'Unet':
+        return image
+    if option == 'Pix2pix':
+        return image
+    if option == 'CycleGAN':
+        return image
+    if option == 'DiscoGAN':
+        return image
+    if option == 'LaMa':
+        return image
 
 
 
@@ -34,5 +42,3 @@ if uploaded_file is not None:
     
     st.subheader("Predicted Map")
     st.image(predicted_map, caption="Predicted Map", use_column_width=True)
-
-
