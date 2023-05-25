@@ -8,7 +8,9 @@ opencv-python==4.7.*
 pandas
 pytorch-lightning==1.8.6
 pylsd-nova
+pyspng
 PyYAML
+streamlit
 tensorboard
 torch==1.13.1
 torchvision==0.14.1
