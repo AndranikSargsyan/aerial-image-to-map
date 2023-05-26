@@ -12,6 +12,12 @@ IMAGENET_STD = [0.229, 0.224, 0.225]
 ADDITIONAL_TARGETS = {'target': 'image'}
 
 
+def get_common_transform(width: int = 256, height: int = 256):
+    transform = A.Compose(
+        [A.Resize(width=width, height=height), ], additional_targets=ADDITIONAL_TARGETS)
+    return transform
+
+
 def get_common_augmentations(crop_size=256):
     transforms = A.Compose([
         A.Rotate(limit=180, border_mode=cv2.BORDER_REFLECT),

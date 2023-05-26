@@ -6,7 +6,8 @@ from torch.utils.data import DataLoader
 
 from qartezator.data.dataset import QartezatorDataset
 from qartezator.data.datautils import seed_worker
-from qartezator.data.transforms import get_transforms, get_common_augmentations
+from qartezator.data.transforms import (
+    get_transforms, get_common_augmentations, get_common_transform)
 from qartezator.data.typing import TransformType
 
 
@@ -73,7 +74,8 @@ class QartezatorDataModule(pl.LightningDataModule):
         )
 
     def val_dataloader(self) -> DataLoader:
-        transform = get_transforms(mean=self.mean, std=self.std)
+        common_transform = get_common_transform(width=self.input_size, height=self.input_size)
+        transform = get_transforms(mean=self.mean, std=self.std, augmentations=common_transform)
 
         dataset = QartezatorDataset(
             root_path=self.root_path,
@@ -91,7 +93,8 @@ class QartezatorDataModule(pl.LightningDataModule):
         )
 
     def test_dataloader(self, *args, **kwargs) -> DataLoader:
-        transform = get_transforms(mean=self.mean, std=self.std)
+        common_transform = get_common_transform(width=self.input_size, height=self.input_size)
+        transform = get_transforms(mean=self.mean, std=self.std, augmentations=common_transform)
 
         dataset = QartezatorDataset(
             root_path=self.root_path,
