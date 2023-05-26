@@ -1,96 +1,75 @@
-import torch
 import torch.nn as nn
 
+from qartezator.models.modules.ffc import FFC_BN_ACT, FFCResnetBlock, ConcatTupleLayer
 
-class Block(nn.Module):
-    def __init__(self, in_channels, out_channels, down=True,
-                 act="relu", use_dropout=False):
+
+def get_activation(kind='tanh'):
+    if kind == 'tanh':
+        return nn.Tanh()
+    if kind == 'sigmoid':
+        return nn.Sigmoid()
+    if kind is False:
+        return nn.Identity()
+    raise ValueError(f'Unknown activation kind {kind}')
+
+
+class FFCResNetGenerator(nn.Module):
+    def __init__(self, input_nc, output_nc, ngf=64, n_downsampling=3, n_blocks=9, norm_layer=nn.BatchNorm2d,
+                 padding_type='reflect', activation_layer=nn.ReLU,
+                 up_norm_layer=nn.BatchNorm2d, up_activation=nn.ReLU(True),
+                 init_conv_kwargs={}, downsample_conv_kwargs={}, resnet_conv_kwargs={},
+                 add_out_act=True, max_features=1024, out_ffc=False, out_ffc_kwargs={}):
+        assert (n_blocks >= 0)
         super().__init__()
-        self.conv = nn.Sequential(
-            nn.Conv2d(in_channels=in_channels, out_channels=out_channels,
-                      kernel_size=4, stride=2, padding=1, bias=False)
-            if down
-            else nn.ConvTranspose2d(in_channels=in_channels, out_channels=out_channels,
-                                    kernel_size=4, stride=2, padding=1, bias=False),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU() if act == "relu" else nn.LeakyReLU(0.2),
-        )
-        self.use_dropout = use_dropout
-        self.dropout = nn.Dropout(0.5)
 
-    def forward(self, x):
-        x = self.conv(x)
-        return self.dropout(x) if self.use_dropout else x
+        model = [nn.ReflectionPad2d(3),
+                 FFC_BN_ACT(input_nc, ngf, kernel_size=7, padding=0, norm_layer=norm_layer,
+                            activation_layer=activation_layer, **init_conv_kwargs)]
 
+        ### downsample
+        for i in range(n_downsampling):
+            mult = 2 ** i
+            if i == n_downsampling - 1:
+                cur_conv_kwargs = dict(downsample_conv_kwargs)
+                cur_conv_kwargs['ratio_gout'] = resnet_conv_kwargs.get('ratio_gin', 0)
+            else:
+                cur_conv_kwargs = downsample_conv_kwargs
+            model += [FFC_BN_ACT(min(max_features, ngf * mult),
+                                 min(max_features, ngf * mult * 2),
+                                 kernel_size=3, stride=2, padding=1,
+                                 norm_layer=norm_layer,
+                                 activation_layer=activation_layer,
+                                 **cur_conv_kwargs)]
 
-class UnetGenerator(nn.Module):
-    def __init__(self, in_channels=3, features=64):
-        super().__init__()
-        self.initial_down = nn.Sequential(
-            nn.Conv2d(in_channels, features, kernel_size=4, stride=2, padding=1),
-            nn.LeakyReLU(0.2)
-        )  # 128 X 128
+        mult = 2 ** n_downsampling
+        feats_num_bottleneck = min(max_features, ngf * mult)
 
-        # ENCODER
-        self.down1 = Block(in_channels=features, out_channels=features*2,
-                           down=True, act="leaky", use_dropout=False)  # 64 X 64
-        self.down2 = Block(in_channels=features*2, out_channels=features*4,
-                           down=True, act="leaky", use_dropout=False)  # 32 X 32
-        self.down3 = Block(in_channels=features*4, out_channels=features*8,
-                           down=True, act="leaky", use_dropout=False)  # 16 X 16
-        self.down4 = Block(in_channels=features*8, out_channels=features*8,
-                           down=True, act="leaky", use_dropout=False)  # 8 X 8
-        self.down5 = Block(in_channels=features*8, out_channels=features*8,
-                           down=True, act="leaky", use_dropout=False)  # 4 X 4
-        self.down6 = Block(in_channels=features*8, out_channels=features*8,
-                           down=True, act="leaky", use_dropout=False)  # 2 X 2
+        ### resnet blocks
+        for i in range(n_blocks):
+            cur_resblock = FFCResnetBlock(feats_num_bottleneck, padding_type=padding_type, activation_layer=activation_layer,
+                                          norm_layer=norm_layer, **resnet_conv_kwargs)
+            model += [cur_resblock]
 
-        # BOTTLENECK
-        self.bottleneck = nn.Sequential(
-            nn.Conv2d(in_channels=features*8, out_channels=features*8,
-                      kernel_size=4, stride=2, padding=1),  # 1 X 1
-            nn.ReLU()
-        )
+        model += [ConcatTupleLayer()]
 
-        # DECODER
-        self.up1 = Block(in_channels=features*8, out_channels=features*8,
-                         down=False, act="relu", use_dropout=True)
-        self.up2 = Block(in_channels=features*8*2, out_channels=features*8,
-                         down=False, act="relu", use_dropout=True)
-        self.up3 = Block(in_channels=features*8*2, out_channels=features*8,
-                         down=False, act="relu", use_dropout=True)
-        self.up4 = Block(in_channels=features*8*2, out_channels=features*8,
-                         down=False, act="relu", use_dropout=False)
-        self.up5 = Block(in_channels=features*8*2, out_channels=features*4,
-                         down=False, act="relu", use_dropout=False)
-        self.up6 = Block(in_channels=features*4*2, out_channels=features*2,
-                         down=False, act="relu", use_dropout=False)
-        self.up7 = Block(in_channels=features*2*2, out_channels=features,
-                         down=False, act="relu", use_dropout=False)
-        self.final_up = nn.Sequential(
-            nn.ConvTranspose2d(in_channels=features*2, out_channels=in_channels,
-                               kernel_size=4, stride=2, padding=1),
-            nn.Tanh()
-        )
+        ### upsample
+        for i in range(n_downsampling):
+            mult = 2 ** (n_downsampling - i)
+            model += [nn.ConvTranspose2d(min(max_features, ngf * mult),
+                                         min(max_features, int(ngf * mult / 2)),
+                                         kernel_size=3, stride=2, padding=1, output_padding=1),
+                      up_norm_layer(min(max_features, int(ngf * mult / 2))),
+                      up_activation]
 
-    def forward(self, x):
-        d1 = self.initial_down(x)
-        d2 = self.down1(d1)
-        d3 = self.down2(d2)
-        d4 = self.down3(d3)
-        d5 = self.down4(d4)
-        d6 = self.down5(d5)
-        d7 = self.down6(d6)
+        if out_ffc:
+            model += [FFCResnetBlock(ngf, padding_type=padding_type, activation_layer=activation_layer,
+                                     norm_layer=norm_layer, inline=True, **out_ffc_kwargs)]
 
-        bottleneck = self.bottleneck(d7)
+        model += [nn.ReflectionPad2d(3),
+                  nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0)]
+        if add_out_act:
+            model.append(get_activation('tanh' if add_out_act is True else add_out_act))
+        self.model = nn.Sequential(*model)
 
-        up1 = self.up1(bottleneck)
-        up2 = self.up2(torch.cat([up1, d7], 1))
-        up3 = self.up3(torch.cat([up2, d6], 1))
-        up4 = self.up4(torch.cat([up3, d5], 1))
-        up5 = self.up5(torch.cat([up4, d4], 1))
-        up6 = self.up6(torch.cat([up5, d3], 1))
-        up7 = self.up7(torch.cat([up6, d2], 1))
-
-        return self.final_up(torch.cat([up7, d1], 1))
-
+    def forward(self, input):
+        return self.model(input)
