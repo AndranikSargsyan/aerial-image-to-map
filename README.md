@@ -21,7 +21,22 @@ If you need torch+cuda, you can use the following command
 pip install torch==1.13.1+cu116 torchvision==0.14.1+cu116 --extra-index-url https://download.pytorch.org/whl/cu116
 ```
 
-# Inference
+# Demo
+Download all models from [this link](https://drive.google.com/drive/folders/1dFtVLJXO7fuq9lYFIXMMquFS5cO1t4i4?usp=sharing) and place inside `models/` directory.
 
+### StreamLit
+
+Start StreamLit demo by running:
+```bash
+streamlit run demo.py
+```
+
+### CLI Inference
+```bash
+python -m qartezator.inference -m PATH-TO-MODEL -i PATH-TO-IMAGE -o OUTPUT-PATH
+```
 
 # Training   
+```bash
+python -m qartezator.train --config-path ./qartezator/configs/qartezator-fourier.yaml
+```
