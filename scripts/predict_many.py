@@ -15,6 +15,7 @@ def get_args():
     parser.add_argument('--model-path', type=str, required=True, help='Traced model path.')
     parser.add_argument('--output-dir', type=str, required=True, help='Output dir.')
     parser.add_argument('--input-range', type=str, required=False, default='sigmoid', help='Input range.')
+    parser.add_argument('--output-range', type=str, required=False, default='sigmoid', help='Input range.')
     parser.add_argument('--pad-to-modulo', type=int, required=False, default=32, help='Which int multiple?.')
     parser.add_argument('--device', type=str, required=False, default='cpu', help='Which device to use?.')
     return parser.parse_args()
@@ -23,9 +24,10 @@ def get_args():
 def process(
     model: torch.nn.Module,
     image: Image.Image,
-    pad_out_to_modulo=32,
-    input_range='sigmoid',
-    device='cpu'
+    pad_out_to_modulo: int = 32,
+    input_range: str = 'sigmoid',
+    output_range: str = 'sigmoid',
+    device: str = 'cpu'
 ) -> Image.Image:
     """Process given image.
 ​
@@ -33,7 +35,8 @@ def process(
         model (torch.nn.Module): Loaded model.
         image (PIL.Image.Image): Input image.
         pad_out_to_modulo (int): What integer multiple should image width and height be.
-​       input_range (Tuple[int, int]): Min and max values of input image.
+​       input_range (str): tanh or sigmoid.
+        output_range (str): tanh or sigmoid.
         device (str): Device to run inference on.
 
     Returns:
@@ -58,6 +61,8 @@ def process(
     with torch.no_grad():
         result = model(image)
     result = result.squeeze().permute(1, 2, 0).clip(0, 1).detach().cpu().numpy()
+    if output_range == 'tanh':
+        result = result * 0.5 + 0.5
     result = np.uint8(255.0 * result)
     result = result[:h, :w]
     result = Image.fromarray(result)
@@ -72,6 +77,7 @@ def main():
     device = args.device
     pad_out_to_modulo = args.pad_to_modulo
     input_range = args.input_range
+    output_range = args.output_range
 
     model = torch.jit.load(model_path, map_location=device)
     model.eval()
@@ -89,7 +95,7 @@ def main():
     for img_path in tqdm(img_paths):
         img_name = Path(img_path).name
         img = Image.open(img_path)
-        result = process(model, img, pad_out_to_modulo, input_range, device)
+        result = process(model, img, pad_out_to_modulo, input_range, output_range, device)
         result.save(output_dir / img_name)
 
 
