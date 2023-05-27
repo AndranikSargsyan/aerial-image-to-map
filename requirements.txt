@@ -9,6 +9,7 @@ pandas
 pytorch-lightning==1.8.6
 pylsd-nova
 pyspng
+pytorch-fid
 PyYAML
 streamlit
 tensorboard
