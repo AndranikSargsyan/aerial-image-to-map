@@ -52,32 +52,37 @@ python -m qartezator.train --config-path ./qartezator/configs/qartezator-fourier
     </tr>
     <tr>
       <td><img src="assets/results/source/14.jpg" raw=true></td>
-      <td><img src="assets/results/target/14.jpg" raw=true></td>
-      <td><img src="assets/results/prediction/14.jpg" raw=true></td>              
+      <td><img src="assets/results/targets/14.jpg" raw=true></td>
+      <td><img src="assets/results/predictions/14.jpg" raw=true></td>              
     </tr>
     <tr>
       <td><img src="assets/results/source/112.jpg" raw=true></td>
-      <td><img src="assets/results/target/112.jpg" raw=true></td>
-      <td><img src="assets/results/prediction/112.jpg" raw=true></td>              
+      <td><img src="assets/results/targets/112.jpg" raw=true></td>
+      <td><img src="assets/results/predictions/112.jpg" raw=true></td>              
     </tr>
      <tr>
       <td><img src="assets/results/source/143.jpg" raw=true></td>
-      <td><img src="assets/results/target/143.jpg" raw=true></td>
-      <td><img src="assets/results/prediction/143.jpg" raw=true></td>              
+      <td><img src="assets/results/targets/143.jpg" raw=true></td>
+      <td><img src="assets/results/predictions/143.jpg" raw=true></td>              
     </tr>
     <tr>
       <td><img src="assets/results/source/200.jpg" raw=true></td>
-      <td><img src="assets/results/target/200.jpg" raw=true></td>
-      <td><img src="assets/results/prediction/200.jpg" raw=true></td>              
+      <td><img src="assets/results/targets/200.jpg" raw=true></td>
+      <td><img src="assets/results/predictions/200.jpg" raw=true></td>              
+    </tr>
+    <tr>
+      <td><img src="assets/results/source/204.jpg" raw=true></td>
+      <td><img src="assets/results/targets/204.jpg" raw=true></td>
+      <td><img src="assets/results/predictions/204.jpg" raw=true></td>              
     </tr>
     <tr>
       <td><img src="assets/results/source/207.jpg" raw=true></td>
-      <td><img src="assets/results/target/207.jpg" raw=true></td>
-      <td><img src="assets/results/prediction/207.jpg" raw=true></td>              
+      <td><img src="assets/results/targets/207.jpg" raw=true></td>
+      <td><img src="assets/results/predictions/207.jpg" raw=true></td>              
     </tr>
     <tr>
       <td><img src="assets/results/source/234.jpg" raw=true></td>
-      <td><img src="assets/results/target/234.jpg" raw=true></td>
-      <td><img src="assets/results/prediction/234.jpg" raw=true></td>              
+      <td><img src="assets/results/targets/234.jpg" raw=true></td>
+      <td><img src="assets/results/predictions/234.jpg" raw=true></td>              
     </tr>
 </table>
