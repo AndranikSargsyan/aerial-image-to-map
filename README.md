@@ -41,7 +41,7 @@ python -m qartezator.inference -m PATH-TO-MODEL -i PATH-TO-IMAGE -o OUTPUT-PATH
 python -m qartezator.train --config-path ./qartezator/configs/qartezator-fourier.yaml
 ```
 
-## Results
+# Results
 
 ### Qartezator-Fourier
 <table class="center">
@@ -86,3 +86,12 @@ python -m qartezator.train --config-path ./qartezator/configs/qartezator-fourier
       <td><img src="assets/results/predictions/234.jpg" raw=true></td>              
     </tr>
 </table>
+
+
+# Acknowledgements
+
+Our work borrows code from the following repos:
+
+https://github.com/advimman/lama
+
+https://github.com/fenglinglwb/MAT
