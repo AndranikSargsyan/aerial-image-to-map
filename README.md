@@ -4,7 +4,7 @@ Qartezator is your translator between aerial images and maps.
 
 ![Qartezator teaser](https://github.com/AndranikSargsyan/qartezator/blob/master/assets/teaser.gif)
 
-# Environment setup
+## Environment setup
 
 Clone the repo: `git clone https://github.com/AndranikSargsyan/qartezator.git`
 
@@ -21,7 +21,7 @@ If you need torch+cuda, you can use the following command
 pip install torch==1.13.1+cu116 torchvision==0.14.1+cu116 --extra-index-url https://download.pytorch.org/whl/cu116
 ```
 
-# Demo
+## Demo
 Download all models from [this link](https://drive.google.com/drive/folders/1dFtVLJXO7fuq9lYFIXMMquFS5cO1t4i4?usp=sharing) and place inside `models/` directory.
 
 ### StreamLit
@@ -36,12 +36,40 @@ streamlit run demo.py
 python -m qartezator.inference -m PATH-TO-MODEL -i PATH-TO-IMAGE -o OUTPUT-PATH
 ```
 
-# Training   
+## Training  
+
+Download training data from [here](https://drive.google.com/uc?id=1nq4yAQ5HSVOGL5B2juPU_L5WElKKVBPj) and extract into data/
+directory.
+
+To start the training run
+
 ```bash
 python -m qartezator.train --config-path ./qartezator/configs/qartezator-fourier.yaml
 ```
 
-# Results
+## Evaluation
+Download test images from [here](https://drive.google.com/file/d/1RdrgqyxRY0cdaHzGnjsZYCiDrd7T-34C/view?usp=share_link).
+
+To do the inference on test set, run
+
+```bash
+python scripts/predict_many.py --source-dir SOURCE_IMG_DIR --model-path TRACED_MODEL_PATH --output-dir OUTPUT_DIR
+```
+please see more argument options in the script.
+
+To evaluate **PSNR**, **SSIM** and **L1**, use
+
+```bash
+ python scripts/cal_psnr_ssim_l1.py --gt-path TARGET_MAPS_DIR --pred-path PREDICTED_MAPS_DIR
+```
+
+To calculate **FID** use
+
+```bash
+python -m pytorch_fid PREDICTED_MAPS_PATH TARGET_MAPS_PATH
+```
+
+## Results
 
 ### Qartezator-Fourier
 <table class="center">
@@ -88,7 +116,7 @@ python -m qartezator.train --config-path ./qartezator/configs/qartezator-fourier
 </table>
 
 
-# Acknowledgements
+## Acknowledgements
 
 Our work borrows code from the following repos:
 
