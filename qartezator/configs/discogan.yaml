@@ -1,0 +1,37 @@
+run_title: 'qartezator-discogan'
+
+location:
+  model_dir: 'model'
+  load_path: null
+
+training_model:
+  kind: default
+  log_step: 50
+  save_step: 500
+  max_step: 50000
+
+datamodule:
+  root_path: ./data/maps
+  train_txt_path: ./assets/train.txt
+  val_txt_path: ./assets/val.txt
+  test_txt_path: ./assets/test.txt
+  train_batch_size: 32
+  val_batch_size: 32
+  test_batch_size: 32
+  input_size: 256
+  mean: 0.5
+  std: 0.5
+
+generator:
+  conv_dims: [32, 64, 128, 256]
+  deconv_dims: [128, 64, 32]
+
+discriminator:
+  conv_dims: [32, 64, 128, 256]
+
+hyperparameters:
+  lr: 0.0002
+  beta1: 0.5
+  beta2: 0.999
+  batch_size: 32
+  weight_decay: 0.0001

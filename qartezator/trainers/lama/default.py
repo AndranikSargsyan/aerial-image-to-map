@@ -3,7 +3,7 @@ import logging
 import torch
 
 from qartezator.losses.feature_matching import feature_matching_loss, l1_loss
-from qartezator.trainers.base import BaseTrainingModule
+from qartezator.trainers.lama.base import BaseTrainingModule
 from qartezator.utils.lamautils import add_prefix_to_keys
 
 LOGGER = logging.getLogger(__name__)

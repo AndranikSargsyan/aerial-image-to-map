@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Union, Tuple, Optional
+from typing import Union, Tuple, Optional, List
 
 from torch.utils.data import Dataset
 
@@ -14,13 +14,17 @@ class QartezatorDataset(Dataset):
         split_file_path: Union[str, Path],
         source_transform: Optional[TransformType] = None,
         common_transform: Optional[TransformType] = None,
-        pad_to_modulo: int = 32
+        pad_to_modulo: int = 32,
+        mean: List[float] = None,
+        std: List[float] = None
     ):
         self.root_path = Path(root_path)
         self.split_file_path = split_file_path
         self.source_transform = source_transform
         self.common_transform = common_transform
         self.pad_to_modulo = pad_to_modulo
+        self.mean = mean
+        self.std = std
         with open(split_file_path) as f:
             self.img_paths = f.read().splitlines()
 
@@ -45,6 +49,9 @@ class QartezatorDataset(Dataset):
             target_img = transformed['target']
         source_img = source_img / 255.0
         target_img = target_img / 255.0
+        if self.mean is not None and self.std is not None:
+            source_img = (source_img - self.mean) / self.std
+            target_img = (target_img - self.mean) / self.std
         return source_img, target_img
 
 

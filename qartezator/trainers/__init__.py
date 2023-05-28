@@ -1,6 +1,6 @@
 import logging
 import torch
-from qartezator.trainers.default import DefaultTrainingModule
+from qartezator.trainers.lama.default import DefaultTrainingModule
 
 
 def get_training_model_class(kind):

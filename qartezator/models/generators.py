@@ -73,3 +73,41 @@ class FFCResNetGenerator(nn.Module):
 
     def forward(self, input):
         return self.model(input)
+
+
+# Defines the DiscoGAN generator with the specified arguments.
+class DiscoGANGenerator(nn.Module):
+    def __init__(self, input_channel, output_channel, conv_dims = [32, 64, 128, 256], deconv_dims = [128, 64, 32]):
+        super(GeneratorCNN, self).__init__()
+        self.num_gpu = 1
+        self.layers = []
+
+        prev_dim = conv_dims[0]
+        self.layers.append(nn.Conv2d(input_channel, prev_dim, 4, 2, 1, bias=False))
+        self.layers.append(nn.LeakyReLU(0.2, inplace=True))
+
+        for out_dim in conv_dims[1:]:
+            self.layers.append(nn.Conv2d(prev_dim, out_dim, 4, 2, 1, bias=False))
+            self.layers.append(nn.BatchNorm2d(out_dim))
+            self.layers.append(nn.LeakyReLU(0.2, inplace=True))
+            prev_dim = out_dim
+
+        for out_dim in deconv_dims:
+            self.layers.append(nn.ConvTranspose2d(prev_dim, out_dim, 4, 2, 1, bias=False))
+            self.layers.append(nn.BatchNorm2d(out_dim))
+            self.layers.append(nn.ReLU(True))
+            prev_dim = out_dim
+
+        self.layers.append(nn.ConvTranspose2d(prev_dim, output_channel, 4, 2, 1, bias=False))
+        self.layers.append(nn.Tanh())
+
+        self.layer_module = nn.ModuleList(self.layers)
+
+    def main(self, x):
+        out = x
+        for layer in self.layer_module:
+            out = layer(out)
+        return out
+
+    def forward(self, x):
+        return self.main(x)
