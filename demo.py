@@ -12,7 +12,7 @@ device = 'cpu'
 models_paths = {
     'unet': 'qartezator_unet.pt',
     'pix2pix': 'qartezator_pix2pix.pt',
-    # 'cyclegan': 'qartezator_cyclegan.pt',
+    'cyclegan': 'qartezator_cyclegan.pt',
     'discogan': 'qartezator_discogan.pt',
     'lama': 'qartezator_lama.pt'
 }
@@ -81,7 +81,7 @@ def predict(image):
     if option == 'Pix2pix':
         return process(models['pix2pix'], image, pad_out_to_modulo=256, output_range='tanh')
     if option == 'CycleGAN':
-        return process(models['cyclegan'], image, pad_out_to_modulo=32)
+        return process(models['cyclegan'], image, pad_out_to_modulo=16, input_range='tanh', output_range='tanh')
     if option == 'DiscoGAN':
         return process(models['discogan'], image, pad_out_to_modulo=32, input_range='tanh', output_range='tanh')
     if option == 'LaMa':
